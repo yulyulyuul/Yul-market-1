@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const models = require("./models");
 const port = 8080;
 
 //app에 대한 설정을 하기 위해 app.use 함.
@@ -57,4 +58,18 @@ app.get("/products/:id/events/:eventId", (req, res) => {
 
 app.listen(port, () => {
   console.log("그랩의 쇼핑몰 서버가 돌아가고 있습니다.");
+  //서버가 실행이 되었을 때 데이터베이스를 동기화하는 작업
+  //더 정확히는 models에 테이블, 칼럼 등 모델링에 필요한 정보를 넣어놨을 때 이걸 데이터베이스에 동기화시키는 것.
+  //예를 들어 models에 상품 관련 테이블을 만들었으면 아래 코드에 의해 데이터베이스에도 그 테이블이 생김.
+  models.sequelize
+    .sync()
+    .then(() => {
+      console.log("DB 연결 성공");
+    })
+    .catch((err) => {
+      console.error(err);
+      console.log("DB 연결 에러");
+      //DB가 연결되지 않으면 API 서버로써 의미가 사라지기 때문에 process를 종료시킨다.
+      process.exit();
+    });
 });
