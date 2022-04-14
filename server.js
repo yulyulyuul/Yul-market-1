@@ -12,40 +12,52 @@ app.use(cors());
 
 //"/products"라는 경로로 method가 get인 요청이 왔을 때 {}안의 코드가 실행된다는 것.
 app.get("/products", (req, res) => {
-  const query = req.query;
-  console.log("QUERY:", query);
-  res.send({
-    products: [
-      {
-        id: 1,
-        name: "농구공",
-        price: 100000,
-        seller: "조던",
-        imageUrl: "images/products/basketball1.jpeg",
-      },
-      {
-        id: 2,
-        name: "축구공",
-        price: 50000,
-        seller: "메시",
-        imageUrl: "images/products/soccerball1.jpg",
-      },
-      {
-        id: 3,
-        name: "키보드",
-        price: 10000,
-        seller: "그랩",
-        imageUrl: "images/products/keyboard1.jpg",
-      },
-    ],
-  });
+  //쌓여있는 데이터를 모두 조회할 때
+  models.Product.findAll()
+    .then((result) => {
+      console.log("PRODUCTS:", result);
+      res.send({
+        products: result,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.send("error발생");
+    });
 });
 app.post("/products", (req, res) => {
+  //post로 상품 관련된 정보를 바디에 받아온다.
   const body = req.body;
-  res.send({
-    //key와 value가 똑같은 경우는 생략이 가능하다. body: body 에서 body로 생략 가능.
-    body,
-  });
+  //body의 정보를 활용, product table에 데이터를 추가해보자.
+  const { name, description, price, seller } = body;
+  //allownull이 false인 것들, 즉 필수입력값들이 입력되지 않은 경우에는
+  //아래 models.Product.create에서 오류가 생기고 데이터 생성은 안 됨.
+  // ||은 또는 이라는 뜻. 이 중 하나라도 false이면 모든 필드 입력하라는 메세지 뜨게 한 것.
+  //이건 방어코드라고 한다. 데이터베이스에 직접 영향을 주는 코드를 짤 때 데이터베이스에 문제가 생기지 않게 하려고 방어코드를 짠다.
+  if (!name || !description || !price || !seller) {
+    res.send("모든 필드를 입력해 주세요.");
+  }
+  //Product table에 새 데이터를 생성할거다. 괄호 안에 들어 있는 객체로 이루어진 데이터를.
+  //데이터베이스에 데이터를 추가하는 것은 오래 걸릴 수 있기 때문에 기본적으로 비동기 처리다. 프로미스 객체임.
+  //Postman에서 받아서 create.
+  models.Product.create({
+    name,
+    description,
+    price,
+    seller,
+  })
+    .then((result) => {
+      //데이터 생성에 성공했을 때에는 result에 데이터 생성 결과 record가 들어가게 된다.
+      console.log("상품 생성 결과 :", result);
+      res.send({
+        //key와 value가 같으면 그냥 이렇게 축약 가능.
+        result,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.send("상품 업로드에 문제가 발생했습니다.");
+    });
 });
 
 app.get("/products/:id/events/:eventId", (req, res) => {
