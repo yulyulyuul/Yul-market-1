@@ -60,12 +60,29 @@ app.post("/products", (req, res) => {
     });
 });
 
-app.get("/products/:id/events/:eventId", (req, res) => {
+app.get("/products/:id", (req, res) => {
   //params에 {id : 값} 형태로 들어옵니다
   const params = req.params;
   //destructuring 참고. 이렇게 하면 id와 eventId에 params의 key에 대한 value가 들어옴.
-  const { id, eventId } = params;
-  res.send(`id는 ${id}, evnetId는 ${eventId}입니다`);
+  const { id } = params;
+  //하나의 data만을 찾고 싶을 때. findAll은 복수개의 데이터 찾을 때.
+  //{} 안에 조건문 넣을 수 있음. where도 조건문.
+  models.Product.findOne({
+    where: {
+      //column에서의 id값(앞 id)이 params의 id 값(뒤 id)과 일치할 때.
+      id: id,
+    },
+  })
+    .then((result) => {
+      console.log("PRODUCT:", result);
+      res.send({
+        product: result,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.send("상품 조회에 에러가 발생했습니다");
+    });
 });
 
 app.listen(port, () => {
