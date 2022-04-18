@@ -2,6 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const models = require("./models");
+const multer = require("multer");
+//dest를 지정하는 것: 다른 이미지 파일이 오면 어느 파일에 저장할 것이냐 하는 것.
+//반환되는 객체를 upload라는 const에 넣겠다.
+const upload = multer({ dest: "uploads/" });
 const port = 8080;
 
 //app에 대한 설정을 하기 위해 app.use 함.
@@ -12,8 +16,18 @@ app.use(cors());
 
 //"/products"라는 경로로 method가 get인 요청이 왔을 때 {}안의 코드가 실행된다는 것.
 app.get("/products", (req, res) => {
-  //쌓여있는 데이터를 모두 조회할 때
-  models.Product.findAll()
+  //쌓여있는 데이터를 모두 조회할 때 findAll()을 사용함. Findall()하고 안에 아무것도 안 넣으면 다 불러옴.
+  //모든 데이터를 다 불러오려면 과부하 걸릴 수 있으므로 이것도 조건을 넣는다.
+  //limit: 숫자 하면 "숫자" 만큼만 데이터를 불러옴.
+  models.Product.findAll({
+    limit: 100,
+    //정렬 방식을 바꿔줄 때 order을 쓴다.
+    //createdAt을 기준으로 내림차순으로 할 때.
+    order: [["createdAt", "DESC"]],
+    //어떤 column들을 가져올 것이냐. 홈 화면에서 상품들 리스트를 볼 때에는 다 필요하지 않음.
+    //모든 칼럼을 보내면 트래픽 낭비의 문제도 있고 예상치 못하게 정보들을 노출시킬 수 있는 가능성 - 보안문제 등 생길 수 있음.
+    attributes: ["id", "name", "price", "createdAt", "seller", "imageUrl"],
+  })
     .then((result) => {
       console.log("PRODUCTS:", result);
       res.send({
@@ -83,6 +97,22 @@ app.get("/products/:id", (req, res) => {
       console.error(error);
       res.send("상품 조회에 에러가 발생했습니다");
     });
+});
+
+//'/image': /image로 요청 받았을 때 (http://localhost:8080/image)
+//upload.single('image'): 이미지 파일을 하나만 보냈을 때 single 씀
+//괄호 안 'image': Image라는 key에 해당하는 value를 upload하는 것. 이처럼 이미지 파일을 업로드 시에는 항상 key가 있어야 함;
+//이렇게 하면 uploads라는 폴더에 해당 이미지가 저장이 될 것.
+app.post("/image", upload.single("image"), (req, res) => {
+  //req.file에 저장된 이미지 정보를 얻을 수 있음.
+  const file = req.file;
+  console.log(req.file);
+  res.send({
+    //file.path가 이미지가 저장된 위치임.
+    imageUrl: file.path,
+  });
+  //이렇게 하면 multer에서 uploads 파일을 저절로 생성한다. 앞으로 이미지 파일은 여기다 저장될 것.
+  //Postman으로 테스트해 볼 수 있다.
 });
 
 app.listen(port, () => {
