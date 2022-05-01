@@ -32,10 +32,26 @@ app.use(cors());
 //해당 파일이 uploads/images/cat.jpg에(뒤의 "uploads") 존재하는지를 검색하게 됨.
 app.use("/uploads", express.static("uploads"));
 
+app.get("/banners", (req, res) => {
+  models.Banner.findAll({
+    limit: 2,
+  })
+    .then((result) => {
+      console.log("banners:", result);
+      res.send({
+        banners: result,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+});
+
 //"/products"라는 경로로 method가 get인 요청이 왔을 때 {}안의 코드가 실행된다는 것.
 app.get("/products", (req, res) => {
   //쌓여있는 데이터를 모두 조회할 때 findAll()을 사용함. Findall()하고 안에 아무것도 안 넣으면 다 불러옴.
   //모든 데이터를 다 불러오려면 과부하 걸릴 수 있으므로 이것도 조건을 넣는다.
+  //findAll() 괄호 안의 첫 번째 객체에 다양한 속성을 넣을 수 있다.
   //limit: 숫자 하면 "숫자" 만큼만 데이터를 불러옴.
   models.Product.findAll({
     limit: 100,
